@@ -5,8 +5,8 @@ from supabase import create_client, Client
 st.set_page_config(page_title="Gestão de Vinhos", page_icon="🍷", layout="wide")
 
 # 2. Credenciais do Supabase
-SUPABASE_URL = "COLE_SUA_URL_AQUI"
-SUPABASE_KEY = "COLE_SUA_CHAVE_ANON_AQUI"
+SUPABASE_URL = "https://rbshwryibzdxuzzbjcdx.supabase.co"
+SUPABASE_KEY = "sb_publishable_vMCnLOxnqW4Y0nUvg6RLBw_rV3JT08Q"
 
 @st.cache_resource
 def init_connection():
