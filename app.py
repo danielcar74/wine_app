@@ -85,40 +85,6 @@ if menu == "🍷 Catálogo":
                 else:
                     st.warning("Preencha o Nome e Preço corretamente.")
 
-    with col1:
-        st.subheader("Adicionar Novo Vinho")
-        # Cria um formulário para empacotar os dados antes de enviar
-        with st.form("form_novo_vinho", clear_on_submit=True):
-            sku = st.text_input("SKU (Código único)*")
-
-            
-            # O botão que dispara a ação
-            submit_button = st.form_submit_button("Cadastrar Vinho")
-            
-            if submit_button:
-                if sku and nome and preco > 0:
-                    # Empacota os dados do jeito que o Supabase espera (JSON)
-                    novo_vinho = {
-                        "sku": sku,
-                        "nome": nome,
-                        "produtor": produtor,
-                        "tipo": tipo,
-                        "pais": pais,
-                        "região": regiao,
-                        "uvas": uvas,
-                        "preco_venda_atual": preco_venda_atual,
-                        "estoque_total": 0
-                    }
-                    try:
-                        # Comando de INSERT no banco
-                        supabase.table("produtos").insert(novo_vinho).execute()
-                        st.success(f"Vinho '{nome}' cadastrado!")
-                        st.rerun() # Atualiza a tela para mostrar o vinho na tabela
-                    except Exception as e:
-                        st.error("Erro: O SKU já existe ou houve falha na conexão.")
-                else:
-                    st.warning("Preencha SKU, Nome e Preço corretamente.")
-
     with col2:
         st.subheader("Vinhos Cadastrados")
         try:
