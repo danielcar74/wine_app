@@ -3,34 +3,87 @@ from supabase import create_client, Client
 
 # 1. Configuração visual da página
 st.set_page_config(page_title="Gestão de Vinhos", page_icon="🍷", layout="wide")
-st.title("🍷 Meu App de Vinhos")
-st.write("Bem-vindo ao sistema de gestão de estoque e vendas!")
 
-# 2. Credenciais do Supabase (Substitua pelas suas)
-SUPABASE_URL = "COLE_SUA_URL_AQUI"
-SUPABASE_KEY = "COLE_SUA_CHAVE_ANON_AQUI"
+# 2. Credenciais do Supabase
+SUPABASE_URL = "https://rbshwryibzdxuzzbjcdx.supabase.co"
+SUPABASE_KEY = "sb_publishable_vMCnLOxnqW4Y0nUvg6RLBw_rV3JT08Q"
 
-# 3. Função para conectar no banco (o cache evita que ele conecte toda hora e fique lento)
 @st.cache_resource
 def init_connection():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# 4. A Mágica: Conectando e puxando os dados
-try:
-    supabase: Client = init_connection()
-    st.success("✅ Conectado ao banco de dados com sucesso!")
+supabase: Client = init_connection()
 
-    st.divider() # Cria uma linha separadora na tela
-    st.subheader("📦 Meu Catálogo de Vinhos")
+# 3. Menu Lateral (A Navegação do App)
+st.sidebar.title("Navegação")
+menu = st.sidebar.radio("Escolha a tela:", ["🍷 Catálogo", "👥 Clientes", "🛒 Vendas"])
 
-    # Isso é o equivalente a fazer um "SELECT * FROM produtos"
-    resposta = supabase.table("produtos").select("*").execute()
+# ==========================================
+# TELA 1: CATÁLOGO DE VINHOS
+# ==========================================
+if menu == "🍷 Catálogo":
+    st.title("📦 Gestão do Catálogo")
+    
+    # Divide a tela em duas colunas (Esquerda menor, Direita maior)
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("Adicionar Novo Vinho")
+        # Cria um formulário para empacotar os dados antes de enviar
+        with st.form("form_novo_vinho", clear_on_submit=True):
+            sku = st.text_input("SKU (Código único)*")
+            nome = st.text_input("Nome do Vinho*")
+            tipo = st.selectbox("Tipo", ["Tinto", "Branco", "Rosé", "Espumante", "Laranja", "Sobremesa"])
+            pais = st.text_input("País")
+            preco = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
+            
+            # O botão que dispara a ação
+            submit_button = st.form_submit_button("Cadastrar Vinho")
+            
+            if submit_button:
+                if sku and nome and preco > 0:
+                    # Empacota os dados do jeito que o Supabase espera (JSON)
+                    novo_vinho = {
+                        "sku": sku,
+                        "nome": nome,
+                        "tipo": tipo,
+                        "pais": pais,
+                        "preco_venda_atual": preco,
+                        "estoque_total": 0
+                    }
+                    try:
+                        # Comando de INSERT no banco
+                        supabase.table("produtos").insert(novo_vinho).execute()
+                        st.success(f"Vinho '{nome}' cadastrado!")
+                        st.rerun() # Atualiza a tela para mostrar o vinho na tabela
+                    except Exception as e:
+                        st.error("Erro: O SKU já existe ou houve falha na conexão.")
+                else:
+                    st.warning("Preencha SKU, Nome e Preço corretamente.")
 
-    # Se tiver dados, mostra como uma tabela interativa na tela
-    if resposta.data:
-        st.dataframe(resposta.data, use_container_width=True)
-    else:
-        st.info("O catálogo está vazio. Vá no Supabase e cadastre seu primeiro vinho para vê-lo aqui!")
+    with col2:
+        st.subheader("Vinhos Cadastrados")
+        try:
+            # Comando de SELECT no banco
+            resposta = supabase.table("produtos").select("sku, nome, tipo, pais, preco_venda_atual, estoque_total").execute()
+            if resposta.data:
+                # Exibe os dados em uma tabela interativa
+                st.dataframe(resposta.data, use_container_width=True, hide_index=True)
+            else:
+                st.info("Nenhum vinho cadastrado. Use o formulário ao lado!")
+        except Exception as e:
+            st.error(f"Erro ao carregar dados: {e}")
 
-except Exception as e:
-    st.error(f"Erro ao conectar no banco: {e}")
+# ==========================================
+# TELA 2: CLIENTES
+# ==========================================
+elif menu == "👥 Clientes":
+    st.title("👥 Gestão de Clientes")
+    st.info("A tela de cadastro de clientes será construída aqui.")
+
+# ==========================================
+# TELA 3: VENDAS
+# ==========================================
+elif menu == "🛒 Vendas":
+    st.title("🛒 Registro de Vendas")
+    st.info("O painel de registro de saídas será construído aqui.")
