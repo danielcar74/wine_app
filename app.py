@@ -33,9 +33,12 @@ if menu == "🍷 Catálogo":
         with st.form("form_novo_vinho", clear_on_submit=True):
             sku = st.text_input("SKU (Código único)*")
             nome = st.text_input("Nome do Vinho*")
+            produtor = st.text_input("Nome do Produtor")
             tipo = st.selectbox("Tipo", ["Tinto", "Branco", "Rosé", "Espumante", "Laranja", "Sobremesa"])
             pais = st.text_input("País")
-            preco = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
+            regiao = st.text_input("Região do produtor")
+            uvas = st.text_input("Nome das uvas")
+            preco_venda_atual = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
             
             # O botão que dispara a ação
             submit_button = st.form_submit_button("Cadastrar Vinho")
@@ -46,9 +49,12 @@ if menu == "🍷 Catálogo":
                     novo_vinho = {
                         "sku": sku,
                         "nome": nome,
+                        "produtor": produtor,
                         "tipo": tipo,
                         "pais": pais,
-                        "preco_venda_atual": preco,
+                        "região": regiao,
+                        "uvas": uvas,
+                        "preco_venda_atual": preco_venda_atual,
                         "estoque_total": 0
                     }
                     try:

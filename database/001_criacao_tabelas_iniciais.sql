@@ -7,8 +7,8 @@ CREATE TABLE produtos (
     produtor VARCHAR (255) NOT NULL,
     tipo VARCHAR(50),
     pais VARCHAR(100),
-    regiao VARCHAR(100),
-    uva_principal VARCHAR(100),
+    regiao VARCHAR(255),
+    uva VARCHAR(255),
     preco_venda_atual DECIMAL(10, 2) NOT NULL,
     estoque_total INTEGER DEFAULT 0
 );
