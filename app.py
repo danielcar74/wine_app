@@ -1,3 +1,10 @@
+
+import ssl
+import httpx
+
+# Tenta forçar o Python a não verificar os certificados de segurança da rede
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import streamlit as st
 from supabase import create_client, Client
 
