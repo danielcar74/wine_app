@@ -46,6 +46,7 @@ if menu == "🍷 Catálogo":
             uva = st.text_input("Uvas")
             preco_venda_atual = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
             
+            
             submit_button = st.form_submit_button("Cadastrar Vinho")
             
             if submit_button:
@@ -71,7 +72,7 @@ if menu == "🍷 Catálogo":
                             "pais": pais,
                             "região": regiao,
                             "uva": uva,
-                            "preco_venda_atual": preco,
+                            "preco_venda_atual": preco_venda_atual,
                             "estoque_total": 0
                         }
                         
