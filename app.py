@@ -70,7 +70,7 @@ if menu == "🍷 Catálogo":
                             "produtor": produtor,
                             "tipo": tipo,
                             "pais": pais,
-                            "região": regiao,
+                            "regiao": regiao,
                             "uva": uva,
                             "preco_venda_atual": preco_venda_atual,
                             "estoque_total": 0
