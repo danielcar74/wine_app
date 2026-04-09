@@ -50,7 +50,7 @@ if menu == "🍷 Catálogo":
             submit_button = st.form_submit_button("Cadastrar Vinho")
             
             if submit_button:
-                if nome and preco > 0:
+                if nome and preco_venda_atual > 0:
                     try:
                         # 1. O CÉREBRO DO SKU: Busca o último cadastrado
                         # Ordena de Z a A e pega só o primeiro (limit 1)
