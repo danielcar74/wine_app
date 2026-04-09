@@ -1,6 +1,8 @@
 
 import ssl
 import httpx
+import pandas as pd
+import math
 
 # Tenta forçar o Python a não verificar os certificados de segurança da rede
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -26,78 +28,112 @@ st.sidebar.title("Navegação")
 menu = st.sidebar.radio("Escolha a tela:", ["🍷 Catálogo", "👥 Clientes", "🛒 Vendas"])
 
 # ==========================================
-# TELA 1: CATÁLOGO DE VINHOS
+# TELA 1: CATÁLOGO
 # ==========================================
 if menu == "🍷 Catálogo":
-    st.title("📦 Gestão do Catálogo")
+    st.title("🍷 Gestão de Catálogo")
     
-    # Divide a tela em duas colunas (Esquerda menor, Direita maior)
-    col1, col2 = st.columns([1, 2])
+    # Cria duas abas visuais na tela
+    aba_manual, aba_planilha = st.tabs(["✍️ Cadastro Manual", "📦 Importação em Massa"])
     
-    with col1:
+    # ------------------------------------------
+    # ABA 1: CADASTRO MANUAL (Seu código atual adaptado)
+    # ------------------------------------------
+    with aba_manual:
         st.subheader("Adicionar Novo Vinho")
         with st.form("form_novo_vinho", clear_on_submit=True):
-            # O campo SKU sumiu daqui! A rotina faz sozinha.
             nome = st.text_input("Nome do Vinho*")
-            produtor = st.text_input("Nome do Produtor")
+            produtor = st.text_input("Produtor*")
             tipo = st.selectbox("Tipo", ["Tinto", "Branco", "Rosé", "Espumante", "Laranja", "Sobremesa"])
+            uva = st.text_input("Uva Principal")
             pais = st.text_input("País")
-            regiao = st.text_input("Região do produtor")
-            uva = st.text_input("Uvas")
+            regiao = st.text_input("Região")
             preco_venda_atual = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
-            
             
             submit_button = st.form_submit_button("Cadastrar Vinho")
             
             if submit_button:
-                if nome and preco_venda_atual > 0:
+                if nome and produtor and preco_venda_atual > 0:
                     try:
-                        # 1. O CÉREBRO DO SKU: Busca o último cadastrado
-                        # Ordena de Z a A e pega só o primeiro (limit 1)
                         resp_sku = supabase.table("produtos").select("sku").order("sku", desc=True).limit(1).execute()
+                        novo_sku = "A00001" if not resp_sku.data else f"A{int(resp_sku.data[0]['sku'].replace('A', '')) + 1:05d}"
                         
-                        if not resp_sku.data:
-                            novo_sku = "A00001" # Se a tabela estiver vazia, é o primeiro!
-                        else:
-                            ultimo_sku = resp_sku.data[0]["sku"] # Ex: "A00004"
-                            numero = int(ultimo_sku.replace("A", "")) # Tira a letra e vira número (4)
-                            novo_sku = f"A{numero + 1:05d}" # Soma 1 e devolve os zeros (A00005)
-                        
-                        # 2. Prepara o pacote com o SKU gerado automaticamente
                         novo_vinho = {
-                            "sku": novo_sku,
-                            "nome": nome,
-                            "produtor": produtor,
-                            "tipo": tipo,
-                            "pais": pais,
-                            "regiao": regiao,
-                            "uva": uva,
-                            "preco_venda_atual": preco_venda_atual,
-                            "estoque_total": 0
+                            "sku": novo_sku, "nome": nome, "produtor": produtor, "tipo": tipo,
+                            "uva": uva, "pais": pais, "regiao": regiao, 
+                            "preco_venda_atual": preco_venda_atual, "estoque_total": 0
                         }
                         
-                        # 3. Salva no banco
                         supabase.table("produtos").insert(novo_vinho).execute()
                         st.success(f"Vinho '{nome}' cadastrado com o código {novo_sku}!")
-                        st.rerun() # Atualiza a tela
-                        
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao cadastrar: {e}")
                 else:
-                    st.warning("Preencha o Nome e Preço corretamente.")
+                    st.warning("Preencha Nome, Produtor e Preço corretamente.")
 
-    with col2:
-        st.subheader("Vinhos Cadastrados")
-        try:
-            # Comando de SELECT no banco
-            resposta = supabase.table("produtos").select("sku, nome, tipo, pais, preco_venda_atual, estoque_total").execute()
-            if resposta.data:
-                # Exibe os dados em uma tabela interativa
-                st.dataframe(resposta.data, use_container_width=True, hide_index=True)
-            else:
-                st.info("Nenhum vinho cadastrado. Use o formulário ao lado!")
-        except Exception as e:
-            st.error(f"Erro ao carregar dados: {e}")
+    # ------------------------------------------
+    # ABA 2: IMPORTAÇÃO DE PLANILHA (Novo recurso)
+    # ------------------------------------------
+    with aba_planilha:
+        st.subheader("Upload de Planilha (.xlsx)")
+        st.markdown("**Regra:** A planilha deve ter cabeçalhos exatos na primeira linha: `nome`, `produtor`, `tipo`, `uva`, `pais`, `regiao`, `preco_venda_atual`, `estoque_total`.")
+        
+        arquivo_excel = st.file_uploader("Arraste seu arquivo Excel aqui", type=['xlsx'])
+        
+        if arquivo_excel is not None:
+            try:
+                # 1. Lê a planilha transformando em um DataFrame do Pandas
+                df = pd.read_excel(arquivo_excel)
+                
+                # 2. Mostra uma prévia dos dados na tela para o usuário conferir
+                st.write("Prévia dos dados encontrados:")
+                st.dataframe(df.head())
+                
+                if st.button("Processar e Salvar no Banco"):
+                    # 3. Validação de segurança básica das colunas obrigatórias
+                    colunas_obrigatorias = ['nome', 'produtor', 'preco_venda_atual']
+                    if not all(coluna in df.columns for coluna in colunas_obrigatorias):
+                        st.error(f"Erro: A planilha deve conter pelo menos as colunas: {', '.join(colunas_obrigatorias)}")
+                    else:
+                        with st.spinner("Gerando SKUs e inserindo no banco..."):
+                            # Descobre qual é o último SKU do banco para continuar a contagem
+                            resp_sku = supabase.table("produtos").select("sku").order("sku", desc=True).limit(1).execute()
+                            ultimo_numero = 0 if not resp_sku.data else int(resp_sku.data[0]['sku'].replace('A', ''))
+                            
+                            lote_vinhos = []
+                            
+                            # 4. Varre cada linha da planilha para montar os pacotes
+                            # O preenchimento de 'fillna("")' evita que vazios quebrem o banco
+                            df = df.fillna("") 
+                            
+                            for index, linha in df.iterrows():
+                                ultimo_numero += 1
+                                novo_sku = f"A{ultimo_numero:05d}"
+                                
+                                vinho = {
+                                    "sku": novo_sku,
+                                    "nome": str(linha['nome']),
+                                    "produtor": str(linha['produtor']),
+                                    "tipo": str(linha['tipo']) if 'tipo' in df.columns else "",
+                                    "uva": str(linha['uva']) if 'uva' in df.columns else "",
+                                    "pais": str(linha['pais']) if 'pais' in df.columns else "",
+                                    "regiao": str(linha['regiao']) if 'regiao' in df.columns else "",
+                                    "preco_venda_atual": float(linha['preco_venda_atual']),
+                                    "estoque_total": int(linha['estoque_total']) if 'estoque_total' in df.columns and linha['estoque_total'] != "" else 0
+                                }
+                                lote_vinhos.append(vinho)
+                            
+                            # 5. BATCH INSERT: Manda a lista inteira de uma vez para o Supabase
+                            supabase.table("produtos").insert(lote_vinhos).execute()
+                            
+                            st.success(f"✅ Sucesso! {len(lote_vinhos)} vinhos foram adicionados ao estoque.")
+                            # Botão para limpar a tela e recarregar
+                            if st.button("Atualizar Tela"):
+                                st.rerun()
+                                
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao processar a planilha: {e}")
 
 # ==========================================
 # TELA 2: CLIENTES
