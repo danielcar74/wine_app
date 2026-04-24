@@ -49,6 +49,7 @@ if menu == "🍷 Catálogo":
             pais = st.text_input("País")
             regiao = st.text_input("Região")
             preco_venda_atual = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
+
             
             submit_button = st.form_submit_button("Cadastrar Vinho")
             
@@ -121,7 +122,7 @@ if menu == "🍷 Catálogo":
                                     "regiao": str(linha['regiao']) if 'regiao' in df.columns else "",
                                     "preco_venda_atual": float(linha['preco_venda_atual']),
                                     "estoque_total": int(linha['estoque_total']) if 'estoque_total' in df.columns and linha['estoque_total'] != "" else 0
-                                }
+                                          }
                                 lote_vinhos.append(vinho)
                             
                             # 5. BATCH INSERT: Manda a lista inteira de uma vez para o Supabase
