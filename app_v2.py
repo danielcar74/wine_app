@@ -157,44 +157,48 @@ elif menu == "👥 Clientes":
         st.subheader("Adicionar Novo Cliente")
         with st.form("form_novo_cliente", clear_on_submit=True):
             nome_cli = st.text_input("Nome do Cliente*")
-            telefone = st.text_input("Produtor*")
-            email = st.text_input("Email")
-            uva = st.text_input("Uva Principal")
-            pais = st.text_input("País")
-            regiao = st.text_input("Região")
-            preco_venda_atual = st.number_input("Preço de Venda (R$)*", min_value=0.0, format="%.2f")
-            custo = st.number_input (   "Preço de custo (R$)*", min_value=0.0, format="%.2f")
-            prazo_fornecedor_dias = st.number_input("Prazo do fornecedor (dias)*", min_value=0, step=1,format="%d")
+            email = st.text_input("E-mail*")
+            telefone = st.text_input("Telefone")
+            apelido = st.text_input("Apelido")
+            endereco = st.text_input("Endereço")
+            bairro = st.text_input("Bairro")
+            cidade = st.text_input("Cidade")
+            vip = st.bool_input("VIP*")
             
-            submit_button = st.form_submit_button("Cadastrar Vinho")
+            submit_button = st.form_submit_button("Cadastrar Cliente")
             
             if submit_button:
                 if nome and produtor and preco_venda_atual not null:
                     try:
-                        resp_sku = supabase.table("produtos").select("sku").order("sku", desc=True).limit(1).execute()
-                        novo_sku = "A00001" if not resp_sku.data else f"A{int(resp_sku.data[0]['sku'].replace('A', '')) + 1:05d}"
+                        resp_sku = supabase.table("clientes").select("cod_cli").order("cod_cli", desc=True).limit(1).execute()
+                        novo_cod_cli = "A00001" if not resp_cod_cli.data else f"A{int(resp_cod_cli.data[0]['cod_cli'].replace('A', '')) + 1:05d}"
                         
-                        novo_vinho = {
-                            "sku": novo_sku, "nome": nome, "produtor": produtor, "tipo": tipo,
-                            "uva": uva, "pais": pais, "regiao": regiao, 
-                            "preco_venda_atual": preco_venda_atual, "custo": custo, "prazo_fornecedor_dias": prazo_fornecedor_dias,
-                            "estoque_total": 0
+                        novo_cli = {
+                            "cod_cli": novo_cod_cli,
+                            "nome_cli": nome_cli,
+                            "email": email,
+                            "telefone": telefone,
+                            "apelido": apelido,
+                            "endereco": endereco,
+                            "bairro": bairro,
+                            "cidade": cidade,
+                            "vip": vip
                         }
                         
-                        supabase.table("produtos").insert(novo_vinho).execute()
-                        st.success(f"Vinho '{nome}' cadastrado com o código {novo_sku}!")
+                        supabase.table("clientes").insert(novo_cli).execute()
+                        st.success(f"Cliente '{nome}' cadastrado com o código {novo_cod_cli}!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"Erro ao cadastrar: {e}")
                 else:
-                    st.warning("Preencha Nome, Produtor e Preço corretamente.")
+                    st.warning("Preencha nome do cliente corretamente.")
 
     # ------------------------------------------
     # ABA 2: IMPORTAÇÃO DE PLANILHA (Novo recurso)
     # ------------------------------------------
     with aba_planilha:
         st.subheader("Upload de Planilha (.xlsx)")
-        st.markdown("**Regra:** A planilha deve ter cabeçalhos exatos na primeira linha: `nome`, `produtor`, `tipo`, `uva`, `pais`, `regiao`, `preco_venda_atual`, `estoque_total`,`custo`, `prazo_fornecedor_dias`.")
+        st.markdown("**Regra:** A planilha deve ter cabeçalhos exatos na primeira linha: `nome_cli`, èmail`, `telefone`, `apelido`, `endereco`, `bairro`, `cidade`, `vip`.")
         
         arquivo_excel = st.file_uploader("Arraste seu arquivo Excel aqui", type=['xlsx'])
         
@@ -209,16 +213,16 @@ elif menu == "👥 Clientes":
                 
                 if st.button("Processar e Salvar no Banco"):
                     # 3. Validação de segurança básica das colunas obrigatórias
-                    colunas_obrigatorias = ['nome', 'produtor', 'preco_venda_atual']
+                    colunas_obrigatorias = ['nome_cli', 'email', 'vip']
                     if not all(coluna in df.columns for coluna in colunas_obrigatorias):
                         st.error(f"Erro: A planilha deve conter pelo menos as colunas: {', '.join(colunas_obrigatorias)}")
                     else:
                         with st.spinner("Gerando SKUs e inserindo no banco..."):
                             # Descobre qual é o último SKU do banco para continuar a contagem
-                            resp_sku = supabase.table("produtos").select("sku").order("sku", desc=True).limit(1).execute()
+                            resp_sku = supabase.table("clientes").select("sku").order("sku", desc=True).limit(1).execute()
                             ultimo_numero = 0 if not resp_sku.data else int(resp_sku.data[0]['sku'].replace('A', ''))
                             
-                            lote_vinhos = []
+                            pasta_clientes = []
                             
                             # 4. Varre cada linha da planilha para montar os pacotes
                             # O preenchimento de 'fillna("")' evita que vazios quebrem o banco
@@ -226,27 +230,25 @@ elif menu == "👥 Clientes":
                             
                             for index, linha in df.iterrows():
                                 ultimo_numero += 1
-                                novo_sku = f"A{ultimo_numero:05d}"
+                                novo_cli = f"A{ultimo_numero:05d}"
                                 
-                                vinho = {
-                                    "sku": novo_sku,
+                                cliente = {
+                                    "cod_cli": novo_cod_cli,
                                     "nome": str(linha['nome']),
-                                    "produtor": str(linha['produtor']),
-                                    "tipo": str(linha['tipo']) if 'tipo' in df.columns else "",
-                                    "uva": str(linha['uva']) if 'uva' in df.columns else "",
-                                    "pais": str(linha['pais']) if 'pais' in df.columns else "",
-                                    "regiao": str(linha['regiao']) if 'regiao' in df.columns else "",
-                                    "preco_venda_atual": float(linha['preco_venda_atual']),
-                                    "estoque_total": int(linha['estoque_total']) if 'estoque_total' in df.columns and linha['estoque_total'] != "" else 0,
-                                    "custo": int(linha['custo']) if 'custo' in df.columns and linha['custo'] != "" else 0,
-                                    "prazo_fornecedor_dias": int(linha['prazo_fornecedor_dias'])if 'prazo_fornecedor_dias' in df.columns and linha ['prazo_fornecedor_dias'] != "" else 0
+                                    "email": str(linha['email']),
+                                    "telefone": str(linha['telefone']) if 'tipo' in df.columns else "",
+                                    "apelido": str(linha['apelido']) if 'apelido' in df.columns else "",
+                                    "endereco": str(linha['endereco']) if 'endereco' in df.columns else "",
+                                    "bairro": str(linha['bairro']) if 'bairro' in df.columns else "",
+                                    "cidade": float(linha['cidade']) if 'cidade' in df.columns and linha['cidade'] != "" else 0,
+                                    "vip": int(linha['vip'])
                                         }
-                                lote_vinhos.append(vinho)
+                                pasta_clientes.append(cliente)
                             
                             # 5. BATCH INSERT: Manda a lista inteira de uma vez para o Supabase
-                            supabase.table("produtos").insert(lote_vinhos).execute()
+                            supabase.table("clientes").insert(pasta _clientes).execute()
                             
-                            st.success(f"✅ Sucesso! {len(lote_vinhos)} vinhos foram adicionados ao estoque.")
+                            st.success(f"✅ Sucesso! {len(pasta_clientes)} clientes foram adicionados ao estoque.")
                             # Botão para limpar a tela e recarregar
                             if st.button("Atualizar Tela"):
                                 st.rerun()
