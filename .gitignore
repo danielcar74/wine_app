@@ -1,0 +1,42 @@
+# ==========================================
+# 1. AMBIENTES VIRTUAIS (O motor do Python)
+# A nuvem instala o próprio motor lendo o requirements.txt
+# ==========================================
+venv/
+.venv/
+env/
+Lib/
+Scripts/
+
+# ==========================================
+# 2. ARQUIVOS TEMPORÁRIOS DO PYTHON
+# Lixo gerado automaticamente quando o código roda
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# ==========================================
+# 3. SENHAS E CHAVES DE API (CRÍTICO)
+# Impede que suas credenciais do Supabase vazem no GitHub
+# ==========================================
+.env
+.streamlit/secrets.toml
+
+# ==========================================
+# 4. DADOS E PLANILHAS
+# Evita subir a base de clientes ou estoques reais para a internet
+# ==========================================
+*.xlsx
+*.csv
+*.db
+*.sqlite3
+
+# ==========================================
+# 5. ARQUIVOS DE SISTEMA OPERACIONAL
+# Arquivos invisíveis do Windows ou do Mac
+# ==========================================
+.DS_Store
+Thumbs.db

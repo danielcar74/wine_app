@@ -1,6 +1,6 @@
 
 import ssl
-import https
+import httpx
 import pandas as pd
 import math
 
