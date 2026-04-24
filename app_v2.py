@@ -243,10 +243,10 @@ elif menu == "👥 Clientes":
                                     "cidade": float(linha['cidade']) if 'cidade' in df.columns and linha['cidade'] != "" else 0,
                                     "vip": int(linha['vip'])
                                         }
-                                pasta_clientes.append(cliente)
+                                pasta_clientes.append(clientes)
                             
                             # 5. BATCH INSERT: Manda a lista inteira de uma vez para o Supabase
-                            supabase.table("clientes").insert(pasta _clientes).execute()
+                            supabase.table("clientes").insert(pasta_clientes).execute()
                             
                             st.success(f"✅ Sucesso! {len(pasta_clientes)} clientes foram adicionados ao estoque.")
                             # Botão para limpar a tela e recarregar
