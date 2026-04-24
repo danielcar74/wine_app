@@ -168,7 +168,7 @@ elif menu == "👥 Clientes":
             submit_button = st.form_submit_button("Cadastrar Cliente")
             
             if submit_button:
-                if nome and produtor and preco_venda_atual not null:
+                if nome_cli:
                     try:
                         resp_sku = supabase.table("clientes").select("cod_cli").order("cod_cli", desc=True).limit(1).execute()
                         novo_cod_cli = "A00001" if not resp_cod_cli.data else f"A{int(resp_cod_cli.data[0]['cod_cli'].replace('A', '')) + 1:05d}"
